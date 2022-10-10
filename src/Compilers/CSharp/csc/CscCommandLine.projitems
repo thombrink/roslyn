@@ -29,11 +29,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)..\..\Shared\ExitingTraceListener.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)..\..\Shared\Csc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Program.cs" />
-
     <None Include="$(MSBuildThisFileDirectory)App.config" Condition="'$(TargetFramework)' == 'net472'" />
-
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.CSharp.CommandLine.UnitTests" />
-    
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\Core\Portable\Microsoft.CodeAnalysis.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\Portable\Microsoft.CodeAnalysis.CSharp.csproj" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="$(SystemIOPipesAccessControlVersion)" Condition="'$(TargetFramework)' == 'net6.0'" />

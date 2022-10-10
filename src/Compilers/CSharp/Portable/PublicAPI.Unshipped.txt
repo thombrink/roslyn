@@ -11,6 +11,7 @@ Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax.Type.get -> Microsoft.Code
 Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax.Update(Microsoft.CodeAnalysis.SyntaxToken scopedKeyword, Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax! type) -> Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax!
 Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax.WithScopedKeyword(Microsoft.CodeAnalysis.SyntaxToken scopedKeyword) -> Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax!
 Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax.WithType(Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax! type) -> Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax!
+Microsoft.CodeAnalysis.CSharp.SyntaxKind.InExpression = 8693 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 Microsoft.CodeAnalysis.CSharp.SyntaxKind.ScopedType = 9075 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
 override Microsoft.CodeAnalysis.CSharp.CSharpSyntaxRewriter.VisitScopedType(Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax! node) -> Microsoft.CodeAnalysis.SyntaxNode?
 override Microsoft.CodeAnalysis.CSharp.Syntax.ScopedTypeSyntax.Accept(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor! visitor) -> void
