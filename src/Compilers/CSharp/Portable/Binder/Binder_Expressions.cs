@@ -792,6 +792,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.WithExpression:
                     return BindWithExpression((WithExpressionSyntax)node, diagnostics);
 
+                case SyntaxKind.InExpression:
+                    return BindInExpression((BinaryExpressionSyntax)node, diagnostics);
+
                 default:
                     // NOTE: We could probably throw an exception here, but it's conceivable
                     // that a non-parser syntax tree could reach this point with an unexpected
@@ -799,6 +802,100 @@ namespace Microsoft.CodeAnalysis.CSharp
                     Debug.Assert(false, "Unexpected SyntaxKind " + node.Kind());
                     diagnostics.Add(ErrorCode.ERR_InternalError, node.Location);
                     return BadExpression(node);
+            }
+        }
+
+        private BoundExpression BindInExpression(BinaryExpressionSyntax node, BindingDiagnosticBag diagnostics)
+        {
+            var element = BindRValueWithoutTargetType(node.Left, diagnostics);
+            var source = BindRValueWithoutTargetType(node.Right, diagnostics);
+
+            var booleanType = GetSpecialType(SpecialType.System_Boolean, diagnostics, node);
+            var int32Type = GetSpecialType(SpecialType.System_Int32, diagnostics, node);
+
+            if (source is BoundRangeExpression rangeExpression)
+            {
+                void checkOperand(BoundExpression operand)
+                {
+                    if (operand != null)
+                    {
+                        if (rangeExpression.LeftOperandOpt is not BoundConversion { Operand: var value })
+                        {
+                            throw new NotImplementedException();
+                        }
+                        else
+                        {
+                            //var int32Type = GetSpecialType(SpecialType.System_Int32, diagnostics, node);
+                            //Debug.Assert(value.Type.Equals(int32Type));
+                        }
+                    }
+                }
+
+                checkOperand(rangeExpression.LeftOperandOpt);
+                checkOperand(rangeExpression.RightOperandOpt);
+
+                return new BoundInOperator(node, element, source, null, null, null, booleanType);
+            }
+            else if (source.Type.IsStringType())
+            {
+                var charType = GetSpecialType(SpecialType.System_Char, diagnostics, node);
+                if (!element.Type.Equals(charType, TypeCompareKind.ConsiderEverything2))
+                {
+                    throw new NotImplementedException();
+                }
+
+                var elementPlaceholder = new BoundInOperatorElementPlaceholder(node, element.Type);
+                var sourcePlaceholder = new BoundInOperatorSourcePlaceholder(node, source.Type);
+                sourcePlaceholder.UseAsThis();
+
+                var indexOf = MakeInvocationExpression(node, sourcePlaceholder, "IndexOf", ImmutableArray.Create<BoundExpression>(elementPlaceholder), diagnostics);
+
+                var test = new BoundBinaryOperator(node, BinaryOperatorKind.GreaterThanOrEqual, null, LookupResultKind.Viable, indexOf, new BoundLiteral(node, ConstantValue.Create(0), int32Type), booleanType);
+
+                return new BoundInOperator(node, element, source, elementPlaceholder, sourcePlaceholder, test, booleanType);
+                // TODO: Build source.IndexOf(element) >= 0
+            }
+            else if (source.Type is ArrayTypeSymbol { IsSZArray: true, ElementType: var elementType } arrayType)
+            {
+                if (!elementType.Equals(element.Type, TypeCompareKind.ConsiderEverything2))
+                {
+                    throw new NotImplementedException();
+                }
+
+                var elementPlaceholder = new BoundInOperatorElementPlaceholder(node, element.Type);
+                var sourcePlaceholder = new BoundInOperatorSourcePlaceholder(node, source.Type);
+                sourcePlaceholder.UseAsThis();
+
+                //var array2Type = GetSpecialType(SpecialType.System_Array, diagnostics, node);
+
+                var indexOf = MakeInvocationExpression(
+                    node,
+                    new BoundTypeExpression(node, null, arrayType),
+                    "IndexOf",
+                    ImmutableArray.Create<BoundExpression>(sourcePlaceholder, elementPlaceholder),
+                    diagnostics);
+
+                var test = new BoundBinaryOperator(node, BinaryOperatorKind.GreaterThanOrEqual, null, LookupResultKind.Viable, indexOf, new BoundLiteral(node, ConstantValue.Create(0), int32Type), booleanType);
+
+                return new BoundInOperator(node, element, source, elementPlaceholder, sourcePlaceholder, test, booleanType);
+
+                // TODO: Build System.Array.IndexOf(source, element) >= 0
+            }
+            else
+            {
+                var elementPlaceholder = new BoundInOperatorElementPlaceholder(node, element.Type);
+                var sourcePlaceholder = new BoundInOperatorSourcePlaceholder(node, source.Type);
+
+                var contains = MakeInvocationExpression(
+                    node,
+                    sourcePlaceholder,
+                    "Contains",
+                    ImmutableArray.Create<BoundExpression>(elementPlaceholder),
+                    diagnostics);
+
+                return new BoundInOperator(node, element, source, elementPlaceholder, sourcePlaceholder, contains, booleanType);
+
+                // TODO: Build source.Contains(element)
             }
         }
 

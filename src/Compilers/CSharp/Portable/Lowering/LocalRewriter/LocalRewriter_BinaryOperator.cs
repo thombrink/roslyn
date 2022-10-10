@@ -2,8 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Xml.Linq;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Roslyn.Utilities;
@@ -2390,6 +2392,71 @@ namespace Microsoft.CodeAnalysis.CSharp
                         loweredRight),
                     sizeOfExpression),
                 Conversion.PointerToInteger);
+        }
+
+        public override BoundNode? VisitInOperator(BoundInOperator node)
+        {
+            if (node.Source is BoundRangeExpression
+                {
+                    LeftOperandOpt: BoundConversion { Operand: var left },
+                    RightOperandOpt: BoundConversion { Operand: var right },
+                } range)
+            {
+                var element = VisitExpression(node.Element);
+                var left2 = VisitExpression(left);
+                var right2 = VisitExpression(right);
+
+                var elementLocal = _factory.StoreToTemp(element, out var storeElement);
+                var leftLocal = _factory.StoreToTemp(left2, out var storeLeft);
+                var rightLocal = _factory.StoreToTemp(right2, out var storeRight);
+
+                BoundExpression a = _factory.IntLessThanOrEqual(leftLocal, elementLocal);
+                BoundExpression b = _factory.IntLessThanOrEqual(elementLocal, rightLocal);
+
+                return
+                    _factory.Sequence(
+                        ImmutableArray.Create(elementLocal.LocalSymbol),
+                        ImmutableArray.Create<BoundExpression>(storeElement, storeLeft, storeRight),
+                        _factory.LogicalAnd(a, b)
+                        );
+            }
+            else
+            {
+                Debug.Assert(node.ElementPlaceholder != null);
+                Debug.Assert(node.SourcePlaceholder != null);
+                Debug.Assert(node.Test != null);
+
+                var element = VisitExpression(node.Element);
+                var source = VisitExpression(node.Source);
+
+                var elementLocal = _factory.StoreToTemp(element, out var storeElement);
+                var sourceLocal = _factory.StoreToTemp(source, out var storeSource);
+
+                AddPlaceholderReplacement(node.ElementPlaceholder, elementLocal);
+                AddPlaceholderReplacement(node.SourcePlaceholder, sourceLocal);
+
+                BoundExpression test = VisitExpression(node.Test);
+
+                RemovePlaceholderReplacement(node.ElementPlaceholder);
+                RemovePlaceholderReplacement(node.SourcePlaceholder);
+
+                return
+                    _factory.Sequence(
+                        ImmutableArray.Create(elementLocal.LocalSymbol, sourceLocal.LocalSymbol),
+                        ImmutableArray.Create<BoundExpression>(storeElement, storeSource),
+                        test
+                    );
+            }
+        }
+
+        public override BoundNode? VisitInOperatorElementPlaceholder(BoundInOperatorElementPlaceholder node)
+        {
+            return PlaceholderReplacement(node);
+        }
+
+        public override BoundNode? VisitInOperatorSourcePlaceholder(BoundInOperatorSourcePlaceholder node)
+        {
+            return PlaceholderReplacement(node);
         }
     }
 }

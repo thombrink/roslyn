@@ -405,7 +405,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case BinaryOperatorKind.Equal: return "Equal";
                 case BinaryOperatorKind.NotEqual: return "NotEqual";
                 case BinaryOperatorKind.LessThan: return "LessThan";
-                case BinaryOperatorKind.LessThanOrEqual: return "LessThanOrEqual";
+                case BinaryOperatorKind.LessThanOrEqual: return "IntLessThanOrEqual";
                 case BinaryOperatorKind.GreaterThan: return "GreaterThan";
                 case BinaryOperatorKind.GreaterThanOrEqual: return "GreaterThanOrEqual";
                 default:

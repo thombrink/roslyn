@@ -13,6 +13,11 @@ namespace Microsoft.CodeAnalysis.CSharp.CommandLine
 {
     public class Program
     {
+        #region MyRegion
+
+        // Test
+
+        #endregion
         public static int Main(string[] args)
         {
             try
